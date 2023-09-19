@@ -17,6 +17,8 @@ use Haruncpi\LaravelIdGenerator\IdGenerator;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 
 class AgentPropertyController extends Controller
 {
@@ -522,8 +524,14 @@ class AgentPropertyController extends Controller
 
     } // End Method
 
-    public function AgentPackageInvoice(){
+    public function AgentPackageInvoice($id){
 
+        $packagehistory = PackagePlan::where('id', $id)->first();
+        $pdf = Pdf::loadView('agent.package.package_hystory_invoice', compact('packagehistory'))->setPaper('a4')->setOption([
+            'tempDri' => public_path(),
+            'chroot' => public_path(),
+        ]);
+        return $pdf->download('invoice.pdf');
     }
 
 }
