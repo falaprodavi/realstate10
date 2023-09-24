@@ -13,7 +13,8 @@ use App\Models\User;
 use Intervention\Image\Facades\Image;
 use Haruncpi\LaravelIdGenerator\IdGenerator;
 use Carbon\Carbon;
-
+use App\Models\PackagePlan;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PropertyController extends Controller
 {
@@ -21,7 +22,7 @@ class PropertyController extends Controller
 
         $property = Property::latest()->get();
         return view('backend.property.all_property', compact('property'));
-        
+
     } // End Method
 
 
@@ -74,7 +75,7 @@ class PropertyController extends Controller
             'property_features' => $request->property_features,
             'property_hot' => $request->property_hot,
             'agent_id' => $request->agent_id,
-            'status' => 1,         
+            'status' => 1,
             'property_thumbnail' => $save_url,
             'created_at' => Carbon::now(),
         ]);
@@ -103,11 +104,11 @@ class PropertyController extends Controller
 
 
         // START ADD Facilities From Here //
-        
+
         $facilities = Count($request->facility_name);
 
         if ($facilities != NULL) {
-            for ($i=0; $i < $facilities; $i++) { 
+            for ($i=0; $i < $facilities; $i++) {
                 $fcount = new Facility();
                 $fcount->property_id = $property_id;
                 $fcount->facility_name = $request->facility_name[$i];
@@ -163,7 +164,7 @@ class PropertyController extends Controller
             'ptype_id' => $request->ptype_id,
             'amenities_id' => $amenities,
             'property_name' => $request->property_name,
-            'property_slug' => strtolower(str_replace(' ', '-', $request->property_name)),            
+            'property_slug' => strtolower(str_replace(' ', '-', $request->property_name)),
             'property_status' => $request->property_status,
             'property_lowest_price' => $request->ptype_id,
             'property_max_price' => $request->property_lowest_price,
@@ -183,7 +184,7 @@ class PropertyController extends Controller
             'property_longitude' => $request->property_longitude,
             'property_features' => $request->property_features,
             'property_hot' => $request->property_hot,
-            'agent_id' => $request->agent_id,                        
+            'agent_id' => $request->agent_id,
             'updated_at' => Carbon::now(),
 
         ]);
@@ -249,7 +250,7 @@ class PropertyController extends Controller
 
             ]);
 
-        } // End Foreach 
+        } // End Foreach
 
 
         $notification = array(
@@ -257,10 +258,10 @@ class PropertyController extends Controller
             'alert-type' => 'success'
         );
 
-        return redirect()->back()->with($notification); 
+        return redirect()->back()->with($notification);
 
 
-    } // End Method 
+    } // End Method
 
 
     public function PropertyMultiimageDelete($id){
@@ -271,15 +272,15 @@ class PropertyController extends Controller
             'message' => 'Property Multi Image Delete Successfully',
             'alert-type' => 'success'
         );
-        return redirect()->back()->with($notification); 
-    } // End Method 
+        return redirect()->back()->with($notification);
+    } // End Method
 
 
     public function StoreNewMultiimage(Request $request){
 
         $new_multi = $request->imageid;
         $image = $request->file('multi_img');
-        
+
         $make_name = hexdec(uniqid()).'.'.$image->getClientOriginalExtension();
         Image::make($image)->fit(770,520)->save('upload/property/multi-image/'.$make_name);
         $uploadPath = 'upload/property/multi-image/'.$make_name;
@@ -296,8 +297,8 @@ class PropertyController extends Controller
             'message' => 'Property Multi Image Added Successfully',
             'alert-type' => 'success'
         );
-        return redirect()->back()->with($notification); 
-    } // End Method 
+        return redirect()->back()->with($notification);
+    } // End Method
 
 
     public function UpdatePropertyFacilities(Request $request){
@@ -315,14 +316,14 @@ class PropertyController extends Controller
             $facilities = Count($request->facility_name);
 
             if ($facilities != NULL) {
-                for ($i=0; $i < $facilities; $i++) { 
+                for ($i=0; $i < $facilities; $i++) {
                     $fcount = new Facility();
                     $fcount->property_id = $pid;
                     $fcount->facility_name = $request->facility_name[$i];
                     $fcount->distance = $request->distance[$i];
                     $fcount->save();
                 } // End for
-            } // End if 
+            } // End if
         }
 
 
@@ -330,10 +331,10 @@ class PropertyController extends Controller
             'message' => 'Facilities Update Successfully',
             'alert-type' => 'success'
         );
-        return redirect()->back()->with($notification); 
+        return redirect()->back()->with($notification);
 
 
-    } // End Method 
+    } // End Method
 
 
     public function DeleteProperty($id) {
@@ -358,10 +359,10 @@ class PropertyController extends Controller
             'message' => 'Property Deleted Successfully',
             'alert-type' => 'success'
         );
-        return redirect()->back()->with($notification); 
+        return redirect()->back()->with($notification);
 
-    } // End Method 
-    
+    } // End Method
+
 
 
     public function DetailsProperty($id){
@@ -396,7 +397,7 @@ class PropertyController extends Controller
             'message' => 'Property Inactive Successfully',
             'alert-type' => 'success'
         );
-        return redirect()->route('all.property')->with($notification); 
+        return redirect()->route('all.property')->with($notification);
 
     } // End Method
 
@@ -412,8 +413,26 @@ class PropertyController extends Controller
             'message' => 'Property Active Successfully',
             'alert-type' => 'success'
         );
-        return redirect()->route('all.property')->with($notification); 
+        return redirect()->route('all.property')->with($notification);
 
     } // End Method
 
-} 
+    public function AdminPackageHistory(){
+
+        $packagehistory = PackagePlan::latest()->get();
+        return view('backend.package.package_history', compact('packagehistory'));
+
+    } // End Method
+
+
+    public function PackageInvoice($id){
+
+        $packagehistory = PackagePlan::where('id', $id)->first();
+        $pdf = Pdf::loadView('backend.package.package_hystory_invoice', compact('packagehistory'))->setPaper('a4')->setOption([
+            'tempDri' => public_path(),
+            'chroot' => public_path(),
+        ]);
+        return $pdf->download('invoice.pdf');
+    } // End Method
+
+}
